@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 
 namespace clipstack
@@ -13,8 +14,27 @@ namespace clipstack
         [STAThread]
         static void Main()
         {
+            Keys hotkey = 0;
+            if (File.Exists("hotkey.txt"))
+            {
+                Console.WriteLine("Using custom keybind from hotkey.txt");
+                foreach (string s in File.ReadAllLines("hotkey.txt"))
+                {
+                    Keys o;
+                    if (Keys.TryParse(s, out o))
+                        hotkey |= o;
+                    else
+                        Console.WriteLine("Can't parse key " + s);
+                }
+            }
+            else
+            {
+                hotkey = Keys.Control | Keys.Oem3;
+                Console.WriteLine("Using default keybind (ctrl-`)");
+            }
+
             stack = new Stack<Clip>();
-            NotificationHelper.Initialize(Keys.Control | Keys.Oem3);
+            NotificationHelper.Initialize(hotkey);
             NotificationHelper.ClipboardHandler += NotificationHelper_ClipboardHandler;
             NotificationHelper.HotkeyHandler += NotificationHelper_HotkeyHandler;
             NotificationHelper.Loop();
@@ -22,7 +42,7 @@ namespace clipstack
 
         private static void NotificationHelper_HotkeyHandler(object sender, EventArgs e)
         {
-            Console.WriteLine("Ctrl-` caught.");
+            Console.WriteLine("Hotkey was pressed.");
             if (stack.Count > 0)
             {
                 Clip c = stack.Pop();
